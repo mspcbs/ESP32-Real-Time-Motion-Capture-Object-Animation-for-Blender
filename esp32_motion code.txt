@@ -1,0 +1,71 @@
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <Arduino_JSON.h>
+
+// WiFi Configuration
+const char* ssid = "robotent";
+const char* password = "123456789";
+
+// Blender's IP and Port (Update this!)
+const char* blenderIP = "192.168.0.108";  // Replace with your Blender PC's IP
+const int blenderPort = 12345;
+
+// UDP Setup
+WiFiUDP udp;
+
+void setup() {
+    Serial.begin(115200);
+    WiFi.begin(ssid, password);
+    
+    Serial.print("Connecting to WiFi");
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("\nConnected!");
+}
+
+void loop() {
+    // Create JSON object
+    JSONVar motionData;
+
+    // Create JSON arrays for bones
+    JSONVar bone1, bone2, bone3, object1;
+
+    // Fill arrays with (Roll, Pitch, Yaw) for bones
+    bone1[0] = random(-90, 90);
+    bone1[1] = random(-90, 90);
+    bone1[2] = random(-90, 90);
+
+    bone2[0] = random(-90, 90);
+    bone2[1] = random(-90, 90);
+    bone2[2] = random(-90, 90);
+
+    bone3[0] = random(-90, 90);
+    bone3[1] = random(-90, 90);
+    bone3[2] = random(-90, 90);
+
+    // Fill array with (X, Y, Z) for object
+    object1[0] = random(0, 10);
+    object1[1] = random(0, 0);
+    object1[2] = random(0, 0);
+
+    // Assign data to motionData
+    motionData["Bone_1"] = bone1;
+    motionData["Bone_2"] = bone2;
+    motionData["Bone_3"] = bone3;
+    motionData["Object_1"] = object1;
+
+    // Convert to JSON String
+    String jsonString = JSON.stringify(motionData);
+
+    // Send Data via UDP
+    udp.beginPacket(blenderIP, blenderPort);
+    udp.write((const uint8_t*)jsonString.c_str(), jsonString.length());  // <-- FIXED
+    udp.endPacket();
+
+    // Debug Output
+    Serial.println(jsonString);
+
+    delay(1000); // 20 FPS
+}
